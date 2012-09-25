@@ -32,8 +32,18 @@ api = setup_api()
 with open(idfile, 'r') as f:
   lastID = f.read().rstrip()
 
-# Collect all the tweets since the last one.
+# Collect all the tweets since the last one, up to 200.
 tweets = api.user_timeline(me, since_id=lastID, count=200, include_rts=True)
+
+# If necessary, collect any tweets in excess of those 200.
+while len(tweets) >= 1:
+    maxID = tweets[-1].id_str
+    chunk = api.user_timeline(me, since_id=lastID, max_id=maxID,
+                              count=200, include_rts=True)
+    if len(chunk) == 1:
+        break
+    else:
+        tweets.extend(chunk[1:]) # max_id is inclusive
 
 # Write them out to the twitter.txt file.
 with open(tweetfile, 'a') as f:
